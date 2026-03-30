@@ -1,0 +1,14 @@
+export const ROOM_W = 16;       // X width
+export const ROOM_H = 12;       // Y height
+export const ROOM_D = 32;       // Z depth (length of court)
+export const PADDLE_W = 3.2;
+export const PADDLE_H = 2.4;
+export const PADDLE_THICK = 0.25;
+export const BALL_RADIUS = 0.35;
+export const INITIAL_BALL_SPEED = 0.22;
+export const MAX_BALL_SPEED = 0.55;
+export const SPEED_INCREASE = 0.012;
+export const AI_SPEED = 0.12;
+export const AI_REACTION_DIST = ROOM_D * 0.65;
+export const WIN_SCORE = 7;
+export const PADDLE_MARGIN = 0.5;  // how far paddle sits from the wall

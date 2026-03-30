@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>3D Pong — Squash Arena</title>
+
+  <meta name="description"
+
+    content="A 3D squash-style Pong game built with Three.js. First-person perspective from under the paddle.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap"
+
+    rel="stylesheet">
+
+  <style>
+
+    * {
+
+      margin: 0;
+
+      padding: 0;
+
+      box-sizing: border-box;
+
+    }
+
+
+
+    body {
+
+      overflow: hidden;
+
+      background: #000;
+
+      font-family: 'Inter', sans-serif;
+
+      cursor: none;
+
+      user-select: none;
+
+    }
+
+
+
+    canvas {
+
+      display: block;
+
+    }
+
+
+
+    /* HUD Overlay */
+
+    #hud {
+
+      position: fixed;
+
+      top: 0;
+
+      left: 0;
+
+      right: 0;
+
+      display: flex;
+
+      justify-content: center;
+
+      align-items: flex-start;
+
+      padding: 24px 40px;
+
+      pointer-events: none;
+
+      z-index: 10;
+
+    }
+
+
+
+    .scoreboard {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 40px;
+
+      background: rgba(0, 0, 0, 0.4);
+
+      backdrop-filter: blur(20px);
+
+      -webkit-backdrop-filter: blur(20px);
+
+      border: 1px solid rgba(255, 255, 255, 0.08);
+
+      border-radius: 20px;
+
+      padding: 16px 48px;
+
+    }
+
+
+
+    .score-section {
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+      gap: 4px;
+
+    }
+
+
+
+    .score-label {
+
+      font-family: 'Inter', sans-serif;
+
+      font-weight: 300;
+
+      font-size: 11px;
+
+      letter-spacing: 3px;
+
+      text-transform: uppercase;
+
+      color: rgba(255, 255, 255, 0.45);
+
+    }
+
+
+
+    .score-value {
+
+      font-family: 'Orbitron', monospace;
+
+      font-weight: 900;
+
+      font-size: 48px;
+
+      line-height: 1;
+
+    }
+
+
+
+    .score-player {
+
+      color: #00e5ff;
+
+      text-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+
+    }
+
+
+
+    .score-opponent {
+
+      color: #ff3d71;
+
+      text-shadow: 0 0 20px rgba(255, 61, 113, 0.5);
+
+    }
+
+
+
+    .score-divider {
+
+      width: 2px;
+
+      height: 50px;
+
+      background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.2), transparent);
+
+    }
+
+
+
+    /* Start / Game Over Screen */
+
+    #overlay {
+
+      position: fixed;
+
+      inset: 0;
+
+      display: flex;
+
+      flex-direction: column;
+
+      justify-content: center;
+
+      align-items: center;
+
+      background: rgba(0, 0, 0, 0.75);
+
+      backdrop-filter: blur(10px);
+
+      z-index: 20;
+
+      transition: opacity 0.5s ease;
+
+    }
+
+
+
+    #overlay.hidden {
+
+      opacity: 0;
+
+      pointer-events: none;
+
+    }
+
+
+
+    #overlay h1 {
+
+      font-family: 'Orbitron', monospace;
+
+      font-size: 64px;
+
+      font-weight: 900;
+
+      background: linear-gradient(135deg, #00e5ff, #7c4dff, #ff3d71);
+
+      -webkit-background-clip: text;
+
+      -webkit-text-fill-color: transparent;
+
+      background-clip: text;
+
+      margin-bottom: 16px;
+
+    }
+
+
+
+    #overlay .subtitle {
+
+      font-size: 16px;
+
+      color: rgba(255, 255, 255, 0.5);
+
+      letter-spacing: 2px;
+
+      margin-bottom: 48px;
+
+    }
+
+
+
+    #overlay .prompt {
+
+      font-family: 'Orbitron', monospace;
+
+      font-size: 18px;
+
+      color: rgba(255, 255, 255, 0.7);
+
+      animation: pulse 2s ease-in-out infinite;
+
+      letter-spacing: 2px;
+
+    }
+
+
+
+    #game-over-msg {
+
+      font-family: 'Orbitron', monospace;
+
+      font-size: 28px;
+
+      color: #ff3d71;
+
+      margin-bottom: 20px;
+
+      display: none;
+
+    }
+
+
+
+    @keyframes pulse {
+
+
+
+      0%,
+
+      100% {
+
+        opacity: 0.5;
+
+      }
+
+
+
+      50% {
+
+        opacity: 1;
+
+      }
+
+    }
+
+
+
+    /* Speed indicator */
+
+    #speed-indicator {
+
+      position: fixed;
+
+      bottom: 30px;
+
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 12px;
+
+      background: rgba(0, 0, 0, 0.35);
+
+      backdrop-filter: blur(12px);
+
+      border: 1px solid rgba(255, 255, 255, 0.06);
+
+      border-radius: 12px;
+
+      padding: 10px 24px;
+
+      pointer-events: none;
+
+      z-index: 10;
+
+      opacity: 0;
+
+      transition: opacity 0.3s;
+
+    }
+
+
+
+    #speed-indicator.visible {
+
+      opacity: 1;
+
+    }
+
+
+
+    #speed-indicator .label {
+
+      font-size: 10px;
+
+      letter-spacing: 2px;
+
+      text-transform: uppercase;
+
+      color: rgba(255, 255, 255, 0.4);
+
+    }
+
+
+
+    #speed-bar-bg {
+
+      width: 160px;
+
+      height: 4px;
+
+      background: rgba(255, 255, 255, 0.08);
+
+      border-radius: 2px;
+
+      overflow: hidden;
+
+    }
+
+
+
+    #speed-bar {
+
+      height: 100%;
+
+      width: 30%;
+
+      border-radius: 2px;
+
+      background: linear-gradient(90deg, #00e5ff, #7c4dff);
+
+      transition: width 0.15s ease;
+
+    }
+
+
+
+    /* Crosshair */
+
+    #crosshair {
+
+      position: fixed;
+
+      pointer-events: none;
+
+      z-index: 15;
+
+      width: 32px;
+
+      height: 32px;
+
+      transform: translate(-50%, -50%);
+
+      opacity: 0;
+
+      transition: opacity 0.3s;
+
+    }
+
+
+
+    #crosshair.visible {
+
+      opacity: 0.6;
+
+    }
+
+
+
+    #crosshair::before,
+
+    #crosshair::after {
+
+      content: '';
+
+      position: absolute;
+
+      background: rgba(0, 229, 255, 0.8);
+
+      border-radius: 1px;
+
+    }
+
+
+
+    #crosshair::before {
+
+      top: 50%;
+
+      left: 0;
+
+      width: 100%;
+
+      height: 2px;
+
+      transform: translateY(-50%);
+
+    }
+
+
+
+    #crosshair::after {
+
+      left: 50%;
+
+      top: 0;
+
+      width: 2px;
+
+      height: 100%;
+
+      transform: translateX(-50%);
+
+    }
+
+  </style>
+
+</head>
+
+
+
+<body>
+
+
+
+  <!-- HUD -->
+
+  <div id="hud">
+
+    <div class="scoreboard">
+
+      <div class="score-section">
+
+        <span class="score-label">You</span>
+
+        <span class="score-value score-player" id="player-score">0</span>
+
+      </div>
+
+      <div class="score-divider"></div>
+
+      <div class="score-section">
+
+        <span class="score-label">Opponent</span>
+
+        <span class="score-value score-opponent" id="opponent-score">0</span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- Speed indicator -->
+
+  <div id="speed-indicator">
+
+    <span class="label">Ball Speed</span>
+
+    <div id="speed-bar-bg">
+
+      <div id="speed-bar"></div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- Crosshair -->
+
+  <div id="crosshair"></div>
+
+
+
+  <!-- Overlay -->
+
+  <div id="overlay">
+
+    <h1>3D PONG</h1>
+
+    <div class="subtitle">SQUASH ARENA</div>
+
+    <div id="game-over-msg"></div>
+
+    <div class="prompt">CLICK TO START</div>
+
+  </div>
+
+
+
+  <script type="importmap">
+
+  {
+
+    "imports": {
+
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+
+    }
+
+  }
+
+  </script>
+
+
+
+  <script type="module">
+
+    import * as THREE from 'three';
+
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+
+
+    // ─── Constants ───────────────────────────────────────────────────
+
+    const ROOM_W = 16;       // X width
+
+    const ROOM_H = 12;       // Y height
+
+    const ROOM_D = 32;       // Z depth (length of court)
+
+    const PADDLE_W = 3.2;
+
+    const PADDLE_H = 2.4;
+
+    const PADDLE_THICK = 0.25;
+
+    const BALL_RADIUS = 0.35;
+
+    const INITIAL_BALL_SPEED = 0.22;
+
+    const MAX_BALL_SPEED = 0.55;
+
+    const SPEED_INCREASE = 0.012;
+
+    const AI_SPEED = 0.12;
+
+    const AI_REACTION_DIST = ROOM_D * 0.65;
+
+    const WIN_SCORE = 7;
+
+    const PADDLE_MARGIN = 0.5;  // how far paddle sits from the wall
+
+
+
+    // ─── State ───────────────────────────────────────────────────────
+
+    let playerScore = 0;
+
+    let opponentScore = 0;
+
+    let gameRunning = false;
+
+    let ballSpeed = INITIAL_BALL_SPEED;
+
+    let ballDir = new THREE.Vector3(0, 0, 1); // towards opponent initially
+
+    let mouseNDC = new THREE.Vector2(0, 0);
+
+
+
+    // ─── DOM refs ────────────────────────────────────────────────────
+
+    const overlayEl = document.getElementById('overlay');
+
+    const playerScoreEl = document.getElementById('player-score');
+
+    const opponentScoreEl = document.getElementById('opponent-score');
+
+    const speedBar = document.getElementById('speed-bar');
+
+    const speedIndicator = document.getElementById('speed-indicator');
+
+    const crosshair = document.getElementById('crosshair');
+
+    const gameOverMsg = document.getElementById('game-over-msg');
+
+
+
+    // ─── Renderer ────────────────────────────────────────────────────
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    renderer.shadowMap.enabled = true;
+
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+    renderer.toneMappingExposure = 1.2;
+
+    document.body.appendChild(renderer.domElement);
+
+
+
+    // ─── Scene ───────────────────────────────────────────────────────
+
+    const scene = new THREE.Scene();
+
+    scene.fog = new THREE.FogExp2(0x050510, 0.018);
+
+
+
+    // ─── Camera (under-paddle POV) ────────────────────────────────
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+
+    // Position: just behind the player's wall, looking forward (+Z)
+
+    camera.position.set(0, 0, -(ROOM_D / 2) - 8);
+
+    camera.lookAt(0, 0, 0);
+
+
+
+    // ─── Post-processing ──────────────────────────────────────────
+
+    const composer = new EffectComposer(renderer);
+
+    composer.addPass(new RenderPass(scene, camera));
+
+    const bloomPass = new UnrealBloomPass(
+
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+
+      0.6, 0.4, 0.85
+
+    );
+
+    composer.addPass(bloomPass);
+
+
+
+    // ─── Lighting ─────────────────────────────────────────────────
+
+    const ambientLight = new THREE.AmbientLight(0x1a1a3e, 0.8);
+
+    scene.add(ambientLight);
+
+
+
+    // Main overhead strip lights (neon feel)
+
+    const stripLight1 = new THREE.RectAreaLight(0x00e5ff, 3, ROOM_W * 0.8, 1);
+
+    stripLight1.position.set(0, ROOM_H / 2 - 0.1, -ROOM_D * 0.15);
+
+    stripLight1.lookAt(0, 0, -ROOM_D * 0.15);
+
+    scene.add(stripLight1);
+
+
+
+    const stripLight2 = new THREE.RectAreaLight(0x7c4dff, 3, ROOM_W * 0.8, 1);
+
+    stripLight2.position.set(0, ROOM_H / 2 - 0.1, ROOM_D * 0.15);
+
+    stripLight2.lookAt(0, 0, ROOM_D * 0.15);
+
+    scene.add(stripLight2);
+
+
+
+    // Point lights for ambiance
+
+    const pointPlayer = new THREE.PointLight(0x00e5ff, 4, ROOM_D * 0.7);
+
+    pointPlayer.position.set(0, 2, -(ROOM_D / 2) + 3);
+
+    scene.add(pointPlayer);
+
+
+
+    const pointOpponent = new THREE.PointLight(0xff3d71, 4, ROOM_D * 0.7);
+
+    pointOpponent.position.set(0, 2, ROOM_D / 2 - 3);
+
+    scene.add(pointOpponent);
+
+
+
+    // ─── Room (wireframe + solid hybrid) ──────────────────────────
+
+    function createRoom() {
+
+      const group = new THREE.Group();
+
+
+
+      // Floor
+
+      const floorGeo = new THREE.PlaneGeometry(ROOM_W, ROOM_D, 32, 64);
+
+      const floorMat = new THREE.MeshStandardMaterial({
+
+        color: 0x0a0a1a,
+
+        metalness: 0.7,
+
+        roughness: 0.3,
+
+        polygonOffset: true,
+
+        polygonOffsetFactor: 1,
+
+        polygonOffsetUnits: 1,
+
+      });
+
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+
+      floor.rotation.x = -Math.PI / 2;
+
+      floor.position.y = -ROOM_H / 2;
+
+      floor.receiveShadow = true;
+
+      group.add(floor);
+
+
+
+      // Ceiling
+
+      const ceilGeo = new THREE.PlaneGeometry(ROOM_W, ROOM_D, 16, 32);
+
+      const ceilMat = new THREE.MeshStandardMaterial({
+
+        color: 0x060614,
+
+        metalness: 0.8,
+
+        roughness: 0.4,
+
+        polygonOffset: true,
+
+        polygonOffsetFactor: 1,
+
+        polygonOffsetUnits: 1,
+
+      });
+
+      const ceil = new THREE.Mesh(ceilGeo, ceilMat);
+
+      ceil.rotation.x = Math.PI / 2;
+
+      ceil.position.y = ROOM_H / 2;
+
+      group.add(ceil);
+
+
+
+      // Left wall
+
+      const sideGeo = new THREE.PlaneGeometry(ROOM_D, ROOM_H, 32, 16);
+
+      const sideMat = new THREE.MeshStandardMaterial({
+
+        color: 0x08081e,
+
+        metalness: 0.6,
+
+        roughness: 0.4,
+
+        polygonOffset: true,
+
+        polygonOffsetFactor: 1,
+
+        polygonOffsetUnits: 1,
+
+      });
+
+
+
+      const leftWall = new THREE.Mesh(sideGeo, sideMat);
+
+      leftWall.rotation.y = Math.PI / 2;
+
+      leftWall.position.x = -ROOM_W / 2;
+
+      group.add(leftWall);
+
+
+
+      // Right wall
+
+      const rightWall = new THREE.Mesh(sideGeo, sideMat.clone());
+
+      rightWall.rotation.y = -Math.PI / 2;
+
+      rightWall.position.x = ROOM_W / 2;
+
+      group.add(rightWall);
+
+
+
+      // Back wall (opponent side) - translucent glow
+
+      const backGeo = new THREE.PlaneGeometry(ROOM_W, ROOM_H, 16, 16);
+
+      const backMat = new THREE.MeshStandardMaterial({
+
+        color: 0xff3d71,
+
+        metalness: 0.5,
+
+        roughness: 0.6,
+
+        transparent: true,
+
+        opacity: 0.15,
+
+        emissive: 0xff3d71,
+
+        emissiveIntensity: 0.15,
+
+        polygonOffset: true,
+
+        polygonOffsetFactor: 1,
+
+        polygonOffsetUnits: 1,
+
+      });
+
+      const backWall = new THREE.Mesh(backGeo, backMat);
+
+      backWall.position.z = ROOM_D / 2;
+
+      group.add(backWall);
+
+
+
+      // Front wall (player side) - not visible from player POV essentially,
+
+      // but add for completeness
+
+      const frontMat = new THREE.MeshStandardMaterial({
+
+        color: 0x00e5ff,
+
+        metalness: 0.5,
+
+        roughness: 0.6,
+
+        transparent: true,
+
+        opacity: 0.08,
+
+        emissive: 0x00e5ff,
+
+        emissiveIntensity: 0.1,
+
+      });
+
+      const frontWall = new THREE.Mesh(backGeo.clone(), frontMat);
+
+      frontWall.rotation.y = Math.PI;
+
+      frontWall.position.z = -ROOM_D / 2;
+
+      group.add(frontWall);
+
+
+
+      // Grid lines on floor
+
+      const gridHelper = new THREE.GridHelper(Math.max(ROOM_W, ROOM_D), 40, 0x1a1a4e, 0x0d0d2e);
+
+      gridHelper.position.y = -ROOM_H / 2 + 0.05;
+
+      group.add(gridHelper);
+
+
+
+      // Neon edge lines
+
+      const edgeMat = new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.35 });
+
+      const edgeGeo = new THREE.BufferGeometry();
+
+      // Inset edges slightly (0.05) so they don't z-fight with wall surfaces
+
+      const e = 0.05;
+
+      const hw = ROOM_W / 2 - e, hh = ROOM_H / 2 - e, hd = ROOM_D / 2 - e;
+
+      const edgeVerts = new Float32Array([
+
+        // Bottom rectangle
+
+        -hw, -hh, -hd, hw, -hh, -hd,
+
+        hw, -hh, -hd, hw, -hh, hd,
+
+        hw, -hh, hd, -hw, -hh, hd,
+
+        -hw, -hh, hd, -hw, -hh, -hd,
+
+        // Top rectangle
+
+        -hw, hh, -hd, hw, hh, -hd,
+
+        hw, hh, -hd, hw, hh, hd,
+
+        hw, hh, hd, -hw, hh, hd,
+
+        -hw, hh, hd, -hw, hh, -hd,
+
+        // Vertical edges
+
+        -hw, -hh, -hd, -hw, hh, -hd,
+
+        hw, -hh, -hd, hw, hh, -hd,
+
+        hw, -hh, hd, hw, hh, hd,
+
+        -hw, -hh, hd, -hw, hh, hd,
+
+      ]);
+
+      edgeGeo.setAttribute('position', new THREE.BufferAttribute(edgeVerts, 3));
+
+      const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
+
+      group.add(edgeLines);
+
+
+
+      // Center line on floor
+
+      const centerLineMat = new THREE.LineBasicMaterial({ color: 0x7c4dff, transparent: true, opacity: 0.4 });
+
+      const clGeo = new THREE.BufferGeometry();
+
+      clGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
+
+        -hw, -hh + 0.06, 0, hw, -hh + 0.06, 0
+
+      ]), 3));
+
+      group.add(new THREE.LineSegments(clGeo, centerLineMat));
+
+
+
+      return group;
+
+    }
+
+    scene.add(createRoom());
+
+
+
+    // ─── Paddles ──────────────────────────────────────────────────
+
+    function createPaddle(color, emissiveColor) {
+
+      const group = new THREE.Group();
+
+
+
+      // Main paddle body
+
+      const geo = new THREE.BoxGeometry(PADDLE_W, PADDLE_H, PADDLE_THICK, 4, 4, 1);
+
+      const mat = new THREE.MeshStandardMaterial({
+
+        color: color,
+
+        metalness: 0.4,
+
+        roughness: 0.2,
+
+        emissive: emissiveColor,
+
+        emissiveIntensity: 0.4,
+
+        transparent: true,
+
+        opacity: 0.25,
+
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+
+      mesh.castShadow = true;
+
+      group.add(mesh);
+
+
+
+      // Edge glow
+
+      const edgesGeo = new THREE.EdgesGeometry(geo);
+
+      const edgesMat = new THREE.LineBasicMaterial({ color: emissiveColor, transparent: true, opacity: 0.7 });
+
+      group.add(new THREE.LineSegments(edgesGeo, edgesMat));
+
+
+
+      return group;
+
+    }
+
+
+
+    const playerPaddle = createPaddle(0x004d66, 0x00e5ff);
+
+    playerPaddle.position.z = -(ROOM_D / 2) + PADDLE_MARGIN;
+
+    scene.add(playerPaddle);
+
+
+
+    const opponentPaddle = createPaddle(0x661430, 0xff3d71);
+
+    opponentPaddle.position.z = (ROOM_D / 2) - PADDLE_MARGIN;
+
+    scene.add(opponentPaddle);
+
+
+
+    // ─── Ball ─────────────────────────────────────────────────────
+
+    const ballGeo = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
+
+    const ballMat = new THREE.MeshStandardMaterial({
+
+      color: 0xffffff,
+
+      metalness: 0.3,
+
+      roughness: 0.1,
+
+      emissive: 0xffffff,
+
+      emissiveIntensity: 0.8,
+
+    });
+
+    const ball = new THREE.Mesh(ballGeo, ballMat);
+
+    ball.castShadow = true;
+
+    scene.add(ball);
+
+
+
+    // Ball glow
+
+    const ballGlow = new THREE.PointLight(0xffffff, 3, 8);
+
+    ball.add(ballGlow);
+
+
+
+    // Ball trail (particles)
+
+    const TRAIL_COUNT = 40;
+
+    const trailPositions = new Float32Array(TRAIL_COUNT * 3);
+
+    const trailSizes = new Float32Array(TRAIL_COUNT);
+
+    const trailOpacities = new Float32Array(TRAIL_COUNT);
+
+    for (let i = 0; i < TRAIL_COUNT; i++) {
+
+      trailSizes[i] = BALL_RADIUS * 4 * (1 - i / TRAIL_COUNT);
+
+      trailOpacities[i] = 1.0 - i / TRAIL_COUNT;
+
+    }
+
+    const trailGeo = new THREE.BufferGeometry();
+
+    trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+
+    trailGeo.setAttribute('size', new THREE.BufferAttribute(trailSizes, 1));
+
+
+
+    const trailMat = new THREE.ShaderMaterial({
+
+      uniforms: {
+
+        uColor: { value: new THREE.Color(0x00e5ff) },
+
+      },
+
+      vertexShader: `
+
+        attribute float size;
+
+        varying float vIndex;
+
+        void main(){
+
+          vIndex = float(gl_VertexID) / ${TRAIL_COUNT.toFixed(1)};
+
+          vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+
+          gl_PointSize = size * (200.0 / -mvPos.z);
+
+          gl_Position = projectionMatrix * mvPos;
+
+        }
+
+      `,
+
+      fragmentShader: `
+
+        uniform vec3 uColor;
+
+        varying float vIndex;
+
+        void main(){
+
+          float d = length(gl_PointCoord - 0.5);
+
+          if(d > 0.5) discard;
+
+          float alpha = (1.0 - vIndex) * smoothstep(0.5, 0.1, d) * 0.5;
+
+          gl_FragColor = vec4(uColor, alpha);
+
+        }
+
+      `,
+
+      transparent: true,
+
+      depthWrite: false,
+
+      blending: THREE.AdditiveBlending,
+
+    });
+
+    const trailMesh = new THREE.Points(trailGeo, trailMat);
+
+    scene.add(trailMesh);
+
+
+
+    // Trail history
+
+    const trailHistory = [];
+
+    for (let i = 0; i < TRAIL_COUNT; i++) trailHistory.push(new THREE.Vector3());
+
+
+
+    // ─── Impact particles ─────────────────────────────────────────
+
+    const PARTICLE_COUNT = 60;
+
+    const particles = [];
+
+    const particleGeo = new THREE.SphereGeometry(0.06, 8, 8);
+
+
+
+    function spawnImpact(position, color) {
+
+      for (let i = 0; i < 20; i++) {
+
+        const mat = new THREE.MeshBasicMaterial({
+
+          color: color,
+
+          transparent: true,
+
+          opacity: 1,
+
+        });
+
+        const p = new THREE.Mesh(particleGeo, mat);
+
+        p.position.copy(position);
+
+        const vel = new THREE.Vector3(
+
+          (Math.random() - 0.5) * 0.3,
+
+          (Math.random() - 0.5) * 0.3,
+
+          (Math.random() - 0.5) * 0.3
+
+        );
+
+        p.userData = { vel, life: 1.0 };
+
+        scene.add(p);
+
+        particles.push(p);
+
+      }
+
+    }
+
+
+
+    function updateParticles() {
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+
+        const p = particles[i];
+
+        p.userData.life -= 0.025;
+
+        if (p.userData.life <= 0) {
+
+          scene.remove(p);
+
+          p.geometry.dispose();
+
+          p.material.dispose();
+
+          particles.splice(i, 1);
+
+          continue;
+
+        }
+
+        p.position.add(p.userData.vel);
+
+        p.material.opacity = p.userData.life;
+
+        p.scale.setScalar(p.userData.life);
+
+      }
+
+    }
+
+
+
+    // ─── Score flash effect ────────────────────────────────────────
+
+    let flashAlpha = 0;
+
+    let flashColor = new THREE.Color();
+
+    const flashGeo = new THREE.PlaneGeometry(ROOM_W * 2, ROOM_H * 2);
+
+    const flashMat = new THREE.MeshBasicMaterial({
+
+      color: 0xffffff,
+
+      transparent: true,
+
+      opacity: 0,
+
+      side: THREE.DoubleSide,
+
+      depthWrite: false,
+
+    });
+
+    const flashMesh = new THREE.Mesh(flashGeo, flashMat);
+
+    flashMesh.position.z = -(ROOM_D / 2) + 2;
+
+    scene.add(flashMesh);
+
+
+
+    function triggerFlash(color) {
+
+      flashAlpha = 0.6;
+
+      flashColor.set(color);
+
+      flashMat.color.copy(flashColor);
+
+    }
+
+
+
+    // ─── Reset ball ───────────────────────────────────────────────
+
+    function resetBall(towardsPlayer) {
+
+      ball.position.set(0, 0, 0);
+
+      ballSpeed = INITIAL_BALL_SPEED;
+
+
+
+      const angle = (Math.random() - 0.5) * 0.6;
+
+      const yAngle = (Math.random() - 0.5) * 0.4;
+
+      const zDir = towardsPlayer ? -1 : 1;
+
+      ballDir.set(
+
+        Math.sin(angle),
+
+        Math.sin(yAngle),
+
+        zDir
+
+      ).normalize();
+
+
+
+      // Reset trail
+
+      for (let i = 0; i < TRAIL_COUNT; i++) {
+
+        trailHistory[i].copy(ball.position);
+
+      }
+
+    }
+
+
+
+    // ─── Score ────────────────────────────────────────────────────
+
+    function score(who) {
+
+      if (who === 'player') {
+
+        playerScore++;
+
+        playerScoreEl.textContent = playerScore;
+
+        triggerFlash(0x00e5ff);
+
+      } else {
+
+        opponentScore++;
+
+        opponentScoreEl.textContent = opponentScore;
+
+        triggerFlash(0xff3d71);
+
+      }
+
+
+
+      if (playerScore >= WIN_SCORE || opponentScore >= WIN_SCORE) {
+
+        gameRunning = false;
+
+        const won = playerScore >= WIN_SCORE;
+
+        gameOverMsg.textContent = won ? 'YOU WIN!' : 'YOU LOSE';
+
+        gameOverMsg.style.color = won ? '#00e5ff' : '#ff3d71';
+
+        gameOverMsg.style.display = 'block';
+
+        overlayEl.classList.remove('hidden');
+
+        speedIndicator.classList.remove('visible');
+
+        crosshair.classList.remove('visible');
+
+        return;
+
+      }
+
+
+
+      resetBall(who === 'opponent');
+
+    }
+
+
+
+    // ─── Check paddle collision ────────────────────────────────────
+
+    function checkPaddleCollision(paddle, isPlayer) {
+
+      const pz = paddle.position.z;
+
+      const bz = ball.position.z;
+
+      const threshold = PADDLE_THICK / 2 + BALL_RADIUS;
+
+
+
+      if (isPlayer) {
+
+        if (bz - threshold > pz) return false;
+
+        if (bz + threshold < pz) return false;
+
+      } else {
+
+        if (bz + threshold < pz) return false;
+
+        if (bz - threshold > pz) return false;
+
+      }
+
+
+
+      const dx = ball.position.x - paddle.position.x;
+
+      const dy = ball.position.y - paddle.position.y;
+
+      const halfW = PADDLE_W / 2 + BALL_RADIUS;
+
+      const halfH = PADDLE_H / 2 + BALL_RADIUS;
+
+
+
+      if (Math.abs(dx) < halfW && Math.abs(dy) < halfH) {
+
+        // Reflect Z
+
+        ballDir.z *= -1;
+
+
+
+        // Influence direction based on where ball hit the paddle
+
+        ballDir.x += (dx / (PADDLE_W / 2)) * 0.4;
+
+        ballDir.y += (dy / (PADDLE_H / 2)) * 0.3;
+
+        ballDir.normalize();
+
+
+
+        // Speed up
+
+        ballSpeed = Math.min(ballSpeed + SPEED_INCREASE, MAX_BALL_SPEED);
+
+
+
+        // Push ball out
+
+        if (isPlayer) {
+
+          ball.position.z = pz + threshold + 0.01;
+
+        } else {
+
+          ball.position.z = pz - threshold - 0.01;
+
+        }
+
+
+
+        spawnImpact(ball.position.clone(), isPlayer ? 0x00e5ff : 0xff3d71);
+
+        return true;
+
+      }
+
+      return false;
+
+    }
+
+
+
+    // ─── AI movement ──────────────────────────────────────────────
+
+    function updateAI() {
+
+      const paddle = opponentPaddle;
+
+      const halfW = ROOM_W / 2 - PADDLE_W / 2;
+
+      const halfH = ROOM_H / 2 - PADDLE_H / 2;
+
+
+
+      // Only react when ball is coming towards opponent
+
+      if (ballDir.z > 0 && ball.position.z > -AI_REACTION_DIST) {
+
+        const dx = ball.position.x - paddle.position.x;
+
+        const dy = ball.position.y - paddle.position.y;
+
+
+
+        // Add some imperfection
+
+        const jitter = (Math.random() - 0.5) * 0.03;
+
+        const speed = AI_SPEED * (0.7 + ballSpeed / MAX_BALL_SPEED * 0.3);
+
+
+
+        paddle.position.x += Math.sign(dx + jitter) * Math.min(Math.abs(dx), speed);
+
+        paddle.position.y += Math.sign(dy + jitter) * Math.min(Math.abs(dy), speed);
+
+      } else {
+
+        // Drift toward center slowly
+
+        paddle.position.x += (0 - paddle.position.x) * 0.02;
+
+        paddle.position.y += (0 - paddle.position.y) * 0.02;
+
+      }
+
+
+
+      // Clamp
+
+      paddle.position.x = THREE.MathUtils.clamp(paddle.position.x, -halfW, halfW);
+
+      paddle.position.y = THREE.MathUtils.clamp(paddle.position.y, -halfH, halfH);
+
+    }
+
+
+
+    // ─── Mouse handling ───────────────────────────────────────────
+
+    document.addEventListener('mousemove', (e) => {
+
+      mouseNDC.x = -((e.clientX / window.innerWidth) * 2 - 1);
+
+      mouseNDC.y = -((e.clientY / window.innerHeight) * 2 - 1); // negated: mouse up → positive Y → paddle up
+
+
+
+      crosshair.style.left = e.clientX + 'px';
+
+      crosshair.style.top = e.clientY + 'px';
+
+    });
+
+
+
+    document.addEventListener('click', () => {
+
+      if (!gameRunning) {
+
+        startGame();
+
+      }
+
+    });
+
+
+
+    function startGame() {
+
+      playerScore = 0;
+
+      opponentScore = 0;
+
+      playerScoreEl.textContent = '0';
+
+      opponentScoreEl.textContent = '0';
+
+      gameOverMsg.style.display = 'none';
+
+      gameRunning = true;
+
+      overlayEl.classList.add('hidden');
+
+      speedIndicator.classList.add('visible');
+
+      crosshair.classList.add('visible');
+
+      resetBall(false);
+
+    }
+
+
+
+    // ─── Window resize ────────────────────────────────────────────
+
+    window.addEventListener('resize', () => {
+
+      const w = window.innerWidth;
+
+      const h = window.innerHeight;
+
+      camera.aspect = w / h;
+
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(w, h);
+
+      composer.setSize(w, h);
+
+    });
+
+
+
+    // ─── Game loop ────────────────────────────────────────────────
+
+    const clock = new THREE.Clock();
+
+
+
+    function animate() {
+
+      requestAnimationFrame(animate);
+
+      const delta = clock.getDelta();
+
+      const elapsed = clock.getElapsedTime();
+
+
+
+      // Subtle room ambient animation
+
+      pointPlayer.intensity = 4 + Math.sin(elapsed * 2) * 0.5;
+
+      pointOpponent.intensity = 4 + Math.cos(elapsed * 1.7) * 0.5;
+
+
+
+      if (gameRunning) {
+
+        // ── Player paddle follows mouse ──
+
+        const halfW = ROOM_W / 2 - PADDLE_W / 2;
+
+        const halfH = ROOM_H / 2 - PADDLE_H / 2;
+
+
+
+        const targetX = mouseNDC.x * halfW;
+
+        const targetY = mouseNDC.y * halfH;
+
+
+
+        playerPaddle.position.x += (targetX - playerPaddle.position.x) * 0.15;
+
+        playerPaddle.position.y += (targetY - playerPaddle.position.y) * 0.15;
+
+        playerPaddle.position.x = THREE.MathUtils.clamp(playerPaddle.position.x, -halfW, halfW);
+
+        playerPaddle.position.y = THREE.MathUtils.clamp(playerPaddle.position.y, -halfH, halfH);
+
+
+
+        // ── Camera sits behind the paddle, barely moves (subtle parallax only) ──
+
+        camera.position.x = playerPaddle.position.x * 0.05;
+
+        camera.position.y = playerPaddle.position.y * 0.05;
+
+        camera.position.z = -(ROOM_D / 2) - 8;
+
+        camera.lookAt(0, 0, 0);
+
+
+
+        // ── AI ──
+
+        updateAI();
+
+
+
+        // ── Ball movement ──
+
+        ball.position.x += ballDir.x * ballSpeed;
+
+        ball.position.y += ballDir.y * ballSpeed;
+
+        ball.position.z += ballDir.z * ballSpeed;
+
+
+
+        // Wall collisions (X and Y)
+
+        const wallLimitX = ROOM_W / 2 - BALL_RADIUS;
+
+        const wallLimitY = ROOM_H / 2 - BALL_RADIUS;
+
+
+
+        if (ball.position.x <= -wallLimitX) {
+
+          ball.position.x = -wallLimitX;
+
+          ballDir.x = Math.abs(ballDir.x);
+
+          spawnImpact(ball.position.clone(), 0x7c4dff);
+
+        } else if (ball.position.x >= wallLimitX) {
+
+          ball.position.x = wallLimitX;
+
+          ballDir.x = -Math.abs(ballDir.x);
+
+          spawnImpact(ball.position.clone(), 0x7c4dff);
+
+        }
+
+
+
+        if (ball.position.y <= -wallLimitY) {
+
+          ball.position.y = -wallLimitY;
+
+          ballDir.y = Math.abs(ballDir.y);
+
+          spawnImpact(ball.position.clone(), 0x7c4dff);
+
+        } else if (ball.position.y >= wallLimitY) {
+
+          ball.position.y = wallLimitY;
+
+          ballDir.y = -Math.abs(ballDir.y);
+
+          spawnImpact(ball.position.clone(), 0x7c4dff);
+
+        }
+
+
+
+        // Paddle collisions
+
+        checkPaddleCollision(playerPaddle, true);
+
+        checkPaddleCollision(opponentPaddle, false);
+
+
+
+        // Score zones (ball passed player or opponent wall)
+
+        if (ball.position.z <= -(ROOM_D / 2) + BALL_RADIUS) {
+
+          score('opponent'); // Player missed
+
+        } else if (ball.position.z >= (ROOM_D / 2) - BALL_RADIUS) {
+
+          score('player'); // Opponent missed
+
+        }
+
+
+
+        // Ball glow color based on direction
+
+        const t = (ball.position.z + ROOM_D / 2) / ROOM_D;
+
+        const glowColor = new THREE.Color().lerpColors(
+
+          new THREE.Color(0x00e5ff),
+
+          new THREE.Color(0xff3d71),
+
+          t
+
+        );
+
+        ballMat.emissive.copy(glowColor);
+
+        ballGlow.color.copy(glowColor);
+
+        trailMat.uniforms.uColor.value.copy(glowColor);
+
+
+
+        // Speed bar
+
+        const speedPercent = ((ballSpeed - INITIAL_BALL_SPEED) / (MAX_BALL_SPEED - INITIAL_BALL_SPEED)) * 100;
+
+        speedBar.style.width = Math.max(5, speedPercent) + '%';
+
+
+
+        // Trail update
+
+        trailHistory.unshift(ball.position.clone());
+
+        trailHistory.pop();
+
+        for (let i = 0; i < TRAIL_COUNT; i++) {
+
+          trailPositions[i * 3] = trailHistory[i].x;
+
+          trailPositions[i * 3 + 1] = trailHistory[i].y;
+
+          trailPositions[i * 3 + 2] = trailHistory[i].z;
+
+        }
+
+        trailGeo.attributes.position.needsUpdate = true;
+
+      }
+
+
+
+      // Flash decay
+
+      if (flashAlpha > 0) {
+
+        flashAlpha -= 0.02;
+
+        flashMat.opacity = Math.max(0, flashAlpha);
+
+        flashMesh.position.copy(camera.position);
+
+        flashMesh.position.z += 1;
+
+        flashMesh.lookAt(camera.position);
+
+      }
+
+
+
+      // Particles
+
+      updateParticles();
+
+
+
+      // Ball rotation for visual flair
+
+      ball.rotation.x += 0.03;
+
+      ball.rotation.y += 0.02;
+
+
+
+      // Paddle subtle tilt based on ball position (for visual flair)
+
+      if (gameRunning) {
+
+        const tiltX = (ball.position.x - playerPaddle.position.x) * 0.02;
+
+        const tiltY = (ball.position.y - playerPaddle.position.y) * 0.02;
+
+        playerPaddle.rotation.y = tiltX;
+
+        playerPaddle.rotation.x = -tiltY;
+
+
+
+        opponentPaddle.rotation.y = -tiltX * 0.5;
+
+        opponentPaddle.rotation.x = tiltY * 0.5;
+
+      }
+
+
+
+      composer.render();
+
+    }
+
+
+
+    animate();
+
+  </script>
+
+</body>
+
+
+
+</html>
