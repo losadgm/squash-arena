@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { ROOM_W, ROOM_H, ROOM_D, BALL_RADIUS } from '../Constants';
 
-export interface Room {
-  width: number;
-  height: number;
-  depth: number;
-}
+const WALL_X = ROOM_W / 2 - BALL_RADIUS;
+const WALL_Y = ROOM_H / 2 - BALL_RADIUS;
+const GOAL_NEAR = -(ROOM_D / 2) + BALL_RADIUS;
+const GOAL_FAR = (ROOM_D / 2) - BALL_RADIUS;
+const _impactPos = new THREE.Vector3();
 
 export function resetBall(
   ball: THREE.Mesh,
@@ -13,11 +13,9 @@ export function resetBall(
   towardsPlayer: boolean
 ) {
   ball.position.set(0, 0, 0);
-
   const angle = (Math.random() - 0.5) * 0.6;
   const yAngle = (Math.random() - 0.5) * 0.4;
-  const zDir = towardsPlayer ? -1 : 1;
-  ballDir.set(Math.sin(angle), Math.sin(yAngle), zDir).normalize();
+  ballDir.set(Math.sin(angle), Math.sin(yAngle), towardsPlayer ? -1 : 1).normalize();
 }
 
 export function moveBall(
@@ -26,39 +24,36 @@ export function moveBall(
   ballSpeed: number,
   spawnImpact: (pos: THREE.Vector3, color: number) => void
 ): boolean {
-  ball.position.x += ballDir.x * ballSpeed;
-  ball.position.y += ballDir.y * ballSpeed;
-  ball.position.z += ballDir.z * ballSpeed;
+  const pos = ball.position;
+  pos.x += ballDir.x * ballSpeed;
+  pos.y += ballDir.y * ballSpeed;
+  pos.z += ballDir.z * ballSpeed;
 
-  const wallLimitX = ROOM_W / 2 - BALL_RADIUS;
-  const wallLimitY = ROOM_H / 2 - BALL_RADIUS;
-
-  if (ball.position.x <= -wallLimitX) {
-    ball.position.x = -wallLimitX;
+  if (pos.x <= -WALL_X) {
+    pos.x = -WALL_X;
     ballDir.x = Math.abs(ballDir.x);
-    spawnImpact(ball.position.clone(), 0xcc00ff);
-  } else if (ball.position.x >= wallLimitX) {
-    ball.position.x = wallLimitX;
+    _impactPos.copy(pos);
+    spawnImpact(_impactPos, 0xcc00ff);
+  } else if (pos.x >= WALL_X) {
+    pos.x = WALL_X;
     ballDir.x = -Math.abs(ballDir.x);
-    spawnImpact(ball.position.clone(), 0xcc00ff);
+    _impactPos.copy(pos);
+    spawnImpact(_impactPos, 0xcc00ff);
   }
 
-  if (ball.position.y <= -wallLimitY) {
-    ball.position.y = -wallLimitY;
+  if (pos.y <= -WALL_Y) {
+    pos.y = -WALL_Y;
     ballDir.y = Math.abs(ballDir.y);
-    spawnImpact(ball.position.clone(), 0xcc00ff);
-  } else if (ball.position.y >= wallLimitY) {
-    ball.position.y = wallLimitY;
+    _impactPos.copy(pos);
+    spawnImpact(_impactPos, 0xcc00ff);
+  } else if (pos.y >= WALL_Y) {
+    pos.y = WALL_Y;
     ballDir.y = -Math.abs(ballDir.y);
-    spawnImpact(ball.position.clone(), 0xcc00ff);
+    _impactPos.copy(pos);
+    spawnImpact(_impactPos, 0xcc00ff);
   }
 
-  // Check for goals
-  if (ball.position.z <= -(ROOM_D / 2) + BALL_RADIUS) {
-    return true; // Opponent scores
-  } else if (ball.position.z >= (ROOM_D / 2) - BALL_RADIUS) {
-    return false; // Player scores (false means player, not opponent)
-  }
-
-  return null as any; // No score
+  if (pos.z <= GOAL_NEAR) return true;
+  if (pos.z >= GOAL_FAR) return false;
+  return null as any;
 }

@@ -1,38 +1,34 @@
 import * as THREE from 'three';
-import { ROOM_W, ROOM_H, ROOM_D } from '../Constants';
+import { ROOM_W, ROOM_H } from '../Constants';
 
 export class FlashEffect {
-  private flashAlpha: number = 0;
-  private decayRate: number = 0.02;
-  private flashColor: THREE.Color = new THREE.Color();
-  private flashMat: THREE.MeshBasicMaterial;
-  private flashMesh: THREE.Mesh;
+  private alpha = 0;
+  private decay = 0.02;
+  private mat: THREE.MeshBasicMaterial;
+  private mesh: THREE.Mesh;
 
   constructor(scene: THREE.Scene) {
-    const flashGeo = new THREE.PlaneGeometry(ROOM_W * 2, ROOM_H * 2);
-    this.flashMat = new THREE.MeshBasicMaterial({
+    const geo = new THREE.PlaneGeometry(ROOM_W * 2, ROOM_H * 2);
+    this.mat = new THREE.MeshBasicMaterial({
       color: 0xffffff, transparent: true, opacity: 0,
       side: THREE.DoubleSide, depthWrite: false,
     });
-    this.flashMesh = new THREE.Mesh(flashGeo, this.flashMat);
-    this.flashMesh.position.z = -(ROOM_D / 2) + 2;
-    scene.add(this.flashMesh);
+    this.mesh = new THREE.Mesh(geo, this.mat);
+    scene.add(this.mesh);
   }
 
-  trigger(color: number, alpha = 0.6, decayRate = 0.02) {
-    this.flashAlpha = alpha;
-    this.decayRate = decayRate;
-    this.flashColor.set(color);
-    this.flashMat.color.copy(this.flashColor);
+  trigger(color: number, alpha = 0.6, decay = 0.02) {
+    this.alpha = alpha;
+    this.decay = decay;
+    this.mat.color.set(color);
   }
 
   update(cameraPos: THREE.Vector3) {
-    if (this.flashAlpha > 0) {
-      this.flashAlpha -= this.decayRate;
-      this.flashMat.opacity = Math.max(0, this.flashAlpha);
-      this.flashMesh.position.copy(cameraPos);
-      this.flashMesh.position.z += 1;
-      this.flashMesh.lookAt(cameraPos);
-    }
+    if (this.alpha <= 0) return;
+    this.alpha -= this.decay;
+    this.mat.opacity = Math.max(0, this.alpha);
+    this.mesh.position.copy(cameraPos);
+    this.mesh.position.z += 1;
+    this.mesh.lookAt(cameraPos);
   }
 }

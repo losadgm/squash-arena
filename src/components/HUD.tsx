@@ -6,7 +6,6 @@ export const HUD: React.FC = () => {
   const opponentScore = useGameStore(state => state.opponentScore);
   const speedPercent = useGameStore(state => state.speedPercent);
   const gameRunning = useGameStore(state => state.gameRunning);
-  const mousePosition = useGameStore(state => state.mousePosition);
 
   return (
     <>
@@ -30,12 +29,6 @@ export const HUD: React.FC = () => {
           <div id="speed-bar" style={{ width: `${Math.max(5, speedPercent)}%` }}></div>
         </div>
       </div>
-
-      <div 
-        id="crosshair" 
-        className={gameRunning ? 'visible' : ''}
-        style={{ left: `${mousePosition.x}px`, top: `${mousePosition.y}px` }}
-      ></div>
     </>
   );
 };

@@ -10,20 +10,15 @@ export const Overlay: React.FC<OverlayProps> = ({ onStartClick }) => {
   const gameOverMsg = useGameStore(state => state.gameOverMsg);
   const isWin = useGameStore(state => state.isWin);
 
-  const visible = !gameRunning;
-
   return (
-    <div id="overlay" className={visible ? '' : 'hidden'}>
+    <div id="overlay" className={gameRunning ? 'hidden' : ''}>
       <h1>3D PONG</h1>
       <div className="subtitle">SQUASH ARENA</div>
 
       {gameOverMsg && (
         <div
           id="game-over-msg"
-          style={{
-            display: 'block',
-            color: isWin ? '#00e5ff' : '#ff3d71'
-          }}
+          style={{ display: 'block', color: isWin ? '#00e5ff' : '#ff3d71' }}
         >
           {gameOverMsg}
         </div>

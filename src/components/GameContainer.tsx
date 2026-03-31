@@ -7,20 +7,22 @@ import { useGameStore } from '../store/useGameStore';
 export const GameContainer: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
+  const crosshairRef = useRef<HTMLDivElement>(null);
 
   const gameRunning = useGameStore(state => state.gameRunning);
-  const setMousePos = useGameStore(state => state.setMousePos);
   const startGame = useGameStore(state => state.startGame);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // We instantiate the engine here
     const engine = new GameEngine(containerRef.current);
     engineRef.current = engine;
 
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePos(e.clientX, e.clientY);
+      if (crosshairRef.current) {
+        crosshairRef.current.style.left = `${e.clientX}px`;
+        crosshairRef.current.style.top = `${e.clientY}px`;
+      }
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -30,7 +32,7 @@ export const GameContainer: React.FC = () => {
       engine.destroy();
       engineRef.current = null;
     };
-  }, [setMousePos]);
+  }, []);
 
   const handleStartClick = () => {
     if (!gameRunning && engineRef.current) {
@@ -41,15 +43,17 @@ export const GameContainer: React.FC = () => {
 
   return (
     <>
-      {/* Game view container */}
-      <div 
-        ref={containerRef} 
-        style={{ width: '100vw', height: '100vh', position: 'absolute', top: 0, left: 0, zIndex: 0 }} 
+      <div
+        ref={containerRef}
+        style={{ width: '100vw', height: '100vh', position: 'absolute', top: 0, left: 0, zIndex: 0 }}
       />
-
-      {/* React UI Overlays */}
       <HUD />
       <Overlay onStartClick={handleStartClick} />
+      <div
+        ref={crosshairRef}
+        id="crosshair"
+        className={gameRunning ? 'visible' : ''}
+      />
     </>
   );
 };

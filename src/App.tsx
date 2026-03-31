@@ -1,4 +1,3 @@
-
 import { GameContainer } from './components/GameContainer';
 import './index.css';
 

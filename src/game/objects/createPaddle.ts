@@ -5,7 +5,7 @@ export function createPaddle(color: number, emissiveColor: number) {
   const group = new THREE.Group();
   const geo = new THREE.BoxGeometry(PADDLE_W, PADDLE_H, PADDLE_THICK, 16, 16, 1);
   const mat = new THREE.MeshStandardMaterial({
-    color: color, metalness: 0.4, roughness: 0.2,
+    color, metalness: 0.4, roughness: 0.2,
     emissive: emissiveColor, emissiveIntensity: 0.4,
     transparent: true, opacity: 0.25,
   });

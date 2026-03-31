@@ -1,39 +1,35 @@
 import * as THREE from 'three';
 import { BALL_RADIUS } from '../Constants';
 
-/**
- * Circular buffer trail — no allocations per frame (no clone(), no unshift/pop).
- */
 export class TrailEffect {
-  private trailCount: number;
-  private trailPositions: Float32Array;
-  private trailGeo: THREE.BufferGeometry;
-  private trailMat: THREE.ShaderMaterial;
-  private trailHistory: THREE.Vector3[] = [];
-  private trailMesh: THREE.Points;
-  private head = 0; // index of the oldest slot (next to overwrite)
+  private count: number;
+  private positions: Float32Array;
+  private geo: THREE.BufferGeometry;
+  private mat: THREE.ShaderMaterial;
+  private history: THREE.Vector3[] = [];
+  private head = 0;
 
-  constructor(scene: THREE.Scene, trailCount = 40) {
-    this.trailCount = trailCount;
-    this.trailPositions = new Float32Array(this.trailCount * 3);
-    const trailSizes = new Float32Array(this.trailCount);
+  constructor(scene: THREE.Scene, count = 40) {
+    this.count = count;
+    this.positions = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
 
-    for (let i = 0; i < this.trailCount; i++) {
-      trailSizes[i] = BALL_RADIUS * 4 * (1 - i / this.trailCount);
-      this.trailHistory.push(new THREE.Vector3());
+    for (let i = 0; i < count; i++) {
+      sizes[i] = BALL_RADIUS * 4 * (1 - i / count);
+      this.history.push(new THREE.Vector3());
     }
 
-    this.trailGeo = new THREE.BufferGeometry();
-    this.trailGeo.setAttribute('position', new THREE.BufferAttribute(this.trailPositions, 3));
-    this.trailGeo.setAttribute('size', new THREE.BufferAttribute(trailSizes, 1));
+    this.geo = new THREE.BufferGeometry();
+    this.geo.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
+    this.geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
-    this.trailMat = new THREE.ShaderMaterial({
+    this.mat = new THREE.ShaderMaterial({
       uniforms: { uColor: { value: new THREE.Color(0x00e5ff) } },
       vertexShader: `
         attribute float size;
         varying float vIndex;
         void main(){
-          vIndex = float(gl_VertexID) / ${this.trailCount.toFixed(1)};
+          vIndex = float(gl_VertexID) / ${count.toFixed(1)};
           vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
           gl_PointSize = size * (200.0 / -mvPos.z);
           gl_Position = projectionMatrix * mvPos;
@@ -52,31 +48,33 @@ export class TrailEffect {
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     });
 
-    this.trailMesh = new THREE.Points(this.trailGeo, this.trailMat);
-    this.trailMesh.frustumCulled = false;
-    scene.add(this.trailMesh);
+    const mesh = new THREE.Points(this.geo, this.mat);
+    mesh.frustumCulled = false;
+    scene.add(mesh);
   }
 
   update(ballPosition: THREE.Vector3, glowColor: THREE.Color) {
-    // Overwrite oldest slot with current position (circular buffer, no allocation)
-    this.trailHistory[this.head].copy(ballPosition);
-    this.head = (this.head + 1) % this.trailCount;
+    this.history[this.head].copy(ballPosition);
+    this.head = (this.head + 1) % this.count;
 
-    // Write to buffer newest-first: head-1 is newest, head is oldest
-    for (let i = 0; i < this.trailCount; i++) {
-      const histIdx = (this.head - 1 - i + this.trailCount) % this.trailCount;
-      this.trailPositions[i * 3]     = this.trailHistory[histIdx].x;
-      this.trailPositions[i * 3 + 1] = this.trailHistory[histIdx].y;
-      this.trailPositions[i * 3 + 2] = this.trailHistory[histIdx].z;
+    const p = this.positions;
+    const h = this.history;
+    const n = this.count;
+    for (let i = 0; i < n; i++) {
+      const v = h[(this.head - 1 - i + n) % n];
+      const o = i * 3;
+      p[o] = v.x;
+      p[o + 1] = v.y;
+      p[o + 2] = v.z;
     }
 
-    this.trailGeo.attributes.position.needsUpdate = true;
-    this.trailMat.uniforms.uColor.value.copy(glowColor);
+    this.geo.attributes.position.needsUpdate = true;
+    this.mat.uniforms.uColor.value.copy(glowColor);
   }
 
   reset(ballPosition: THREE.Vector3) {
-    for (let i = 0; i < this.trailCount; i++) {
-      this.trailHistory[i].copy(ballPosition);
+    for (let i = 0; i < this.count; i++) {
+      this.history[i].copy(ballPosition);
     }
     this.head = 0;
   }
