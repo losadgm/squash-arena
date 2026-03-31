@@ -16,6 +16,7 @@ export function createRenderer(container: HTMLElement, scene: THREE.Scene, camer
 
   const size = renderer.getDrawingBufferSize(new THREE.Vector2());
   const renderTarget = new THREE.WebGLRenderTarget(size.width, size.height, {
+    samples: 4,
     type: THREE.HalfFloatType
   });
   const composer = new EffectComposer(renderer, renderTarget);
