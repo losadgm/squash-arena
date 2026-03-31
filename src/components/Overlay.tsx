@@ -13,23 +13,23 @@ export const Overlay: React.FC<OverlayProps> = ({ onStartClick }) => {
   const visible = !gameRunning;
 
   return (
-    <div id="overlay" className={visible ? '' : 'hidden'} onClick={onStartClick}>
+    <div id="overlay" className={visible ? '' : 'hidden'}>
       <h1>3D PONG</h1>
       <div className="subtitle">SQUASH ARENA</div>
-      
+
       {gameOverMsg && (
-        <div 
-          id="game-over-msg" 
-          style={{ 
-            display: 'block', 
-            color: isWin ? '#00e5ff' : '#ff3d71' 
+        <div
+          id="game-over-msg"
+          style={{
+            display: 'block',
+            color: isWin ? '#00e5ff' : '#ff3d71'
           }}
         >
           {gameOverMsg}
         </div>
       )}
-      
-      <div className="prompt">CLICK TO START</div>
+
+      <div className="prompt" onClick={onStartClick}>CLICK TO START</div>
     </div>
   );
 };

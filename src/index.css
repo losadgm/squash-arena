@@ -16,16 +16,14 @@ canvas {
   display: block;
 }
 
-/* Glassmorphism primitives */
+/* ── Vaporwave UI primitives ──────────────────────────────── */
 .glass-panel {
-  background: rgba(10, 10, 20, 0.45);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: rgba(13, 2, 33, 0.75);
+  border: 1px solid rgba(204, 0, 255, 0.35);
+  box-shadow: 0 0 18px rgba(204, 0, 255, 0.15), inset 0 0 12px rgba(204, 0, 255, 0.05);
 }
 
-/* HUD Overlay */
+/* ── HUD ──────────────────────────────────────────────────── */
 #hud {
   position: fixed;
   top: 0;
@@ -34,7 +32,7 @@ canvas {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 30px 40px;
+  padding: 24px 40px;
   pointer-events: none;
   z-index: 10;
 }
@@ -42,26 +40,26 @@ canvas {
 .scoreboard {
   display: flex;
   align-items: center;
-  gap: 50px;
-  border-radius: 24px;
-  padding: 16px 56px;
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  gap: 40px;
+  border-radius: 4px;
+  padding: 14px 48px;
+  transition: transform 0.3s ease;
 }
 
 .score-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .score-label {
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 11px;
-  letter-spacing: 4px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(204, 0, 255, 0.85);
+  text-shadow: 0 0 8px rgba(204, 0, 255, 0.6);
 }
 
 .score-value {
@@ -74,21 +72,56 @@ canvas {
 
 .score-player {
   color: #00e5ff;
-  text-shadow: 0 0 24px rgba(0, 229, 255, 0.7), 0 0 40px rgba(0, 229, 255, 0.3);
+  text-shadow:
+    0 0 10px #00e5ff,
+    0 0 25px #00e5ff,
+    0 0 50px rgba(0, 229, 255, 0.5);
 }
 
 .score-opponent {
   color: #ff3d71;
-  text-shadow: 0 0 24px rgba(255, 61, 113, 0.7), 0 0 40px rgba(255, 61, 113, 0.3);
+  text-shadow:
+    0 0 10px #ff3d71,
+    0 0 25px #ff3d71,
+    0 0 50px rgba(255, 61, 113, 0.5);
 }
 
 .score-divider {
-  width: 2px;
-  height: 40px;
-  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.3), transparent);
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(to bottom, transparent, rgba(204, 0, 255, 0.6), transparent);
 }
 
-/* Start / Game Over Screen */
+/* ── Overlay ──────────────────────────────────────────────── */
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes neonFlicker {
+  0%, 92%, 96%, 100% { opacity: 1; }
+  93% { opacity: 0.7; }
+  95% { opacity: 0.85; }
+  97% { opacity: 0.5; }
+}
+
+@keyframes glitch {
+  0%, 88%, 100% { text-shadow: 0 0 20px currentColor; transform: none; clip-path: none; }
+  89% { transform: translate(-4px, 0); text-shadow: 4px 0 #00e5ff, -4px 0 #ff3d71; }
+  91% { transform: translate(4px, 0);  text-shadow: -4px 0 #00e5ff, 4px 0 #ff3d71; }
+  93% { transform: translate(0, -2px); }
+}
+
+@keyframes promptPulse {
+  0%, 100% { box-shadow: 0 0 12px #00ffff, inset 0 0 12px rgba(0,255,255,0.08); }
+  50%       { box-shadow: 0 0 28px #00ffff, 0 0 50px rgba(0,255,255,0.3), inset 0 0 20px rgba(0,255,255,0.15); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 #overlay {
   position: fixed;
   inset: 0;
@@ -96,118 +129,101 @@ canvas {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle at center, rgba(16, 16, 32, 0.8) 0%, rgba(0, 0, 0, 0.95) 100%);
-  backdrop-filter: blur(12px);
   z-index: 20;
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: default;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   opacity: 1;
+  /* Vaporwave bg: dark gradient + subtle grid */
+  background:
+    repeating-linear-gradient(0deg,   transparent, transparent 39px, rgba(204,0,255,0.06) 40px),
+    repeating-linear-gradient(90deg,  transparent, transparent 39px, rgba(204,0,255,0.06) 40px),
+    linear-gradient(180deg, #0d0221 0%, #1e0440 55%, #3a0060 100%);
 }
+
+/* Moving scanline */
+#overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 50%, rgba(0,0,0,0.12) 50%);
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* All overlay content must be above the scanline layer */
+#overlay > * { position: relative; z-index: 2; }
 
 #overlay.hidden {
   opacity: 0;
   pointer-events: none;
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 #overlay h1 {
   font-family: 'Orbitron', monospace;
-  font-size: 72px;
+  font-size: 76px;
   font-weight: 900;
-  background: linear-gradient(135deg, #00e5ff, #7c4dff, #ff3d71);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 8px;
-  letter-spacing: 4px;
-  filter: drop-shadow(0 0 30px rgba(124, 77, 255, 0.4));
+  color: #cc00ff;
+  letter-spacing: 6px;
+  margin-bottom: 6px;
+  animation: neonFlicker 6s infinite;
+  text-shadow:
+    0 0 10px #cc00ff,
+    0 0 22px #cc00ff,
+    0 0 50px #cc00ff,
+    0 0 90px rgba(204, 0, 255, 0.5);
 }
 
 #overlay .subtitle {
-  font-family: 'Inter', sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-  opacity: 0.6;
-  letter-spacing: 6px;
-  margin-bottom: 60px;
-  text-transform: uppercase;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: #ff44cc;
+  letter-spacing: 5px;
+  margin-bottom: 64px;
+  text-shadow: 0 0 10px rgba(255, 68, 204, 0.7);
 }
 
 #overlay .prompt {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 100px;
-  padding: 14px 40px;
-  font-family: 'Orbitron', monospace;
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-  letter-spacing: 3px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #00ffff;
+  background: transparent;
+  border: 2px solid #00ffff;
+  border-radius: 2px;
+  padding: 16px 36px;
+  letter-spacing: 2px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-#overlay .prompt::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
+  text-shadow: 0 0 10px #00ffff;
+  animation: promptPulse 2s ease-in-out infinite;
+  transition: background 0.2s ease;
 }
 
 #overlay .prompt:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(0, 229, 255, 0.5);
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-#overlay .prompt:hover::before {
-  left: 100%;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
+  background: rgba(0, 255, 255, 0.1);
 }
 
 #game-over-msg {
   font-family: 'Orbitron', monospace;
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 30px;
+  font-size: 30px;
+  font-weight: 900;
+  margin-bottom: 32px;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 4px;
+  animation: glitch 3s infinite, slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Speed indicator */
+/* ── Speed indicator ──────────────────────────────────────── */
 #speed-indicator {
   position: fixed;
-  bottom: 40px;
+  bottom: 36px;
   left: 50%;
-  transform: translateX(-50%) translateY(20px);
+  transform: translateX(-50%) translateY(16px);
   display: flex;
   align-items: center;
-  gap: 16px;
-  border-radius: 16px;
-  padding: 12px 28px;
+  gap: 14px;
+  border-radius: 4px;
+  padding: 10px 24px;
   pointer-events: none;
   z-index: 10;
   opacity: 0;
@@ -220,29 +236,27 @@ canvas {
 }
 
 #speed-indicator .label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: rgba(204, 0, 255, 0.85);
+  text-shadow: 0 0 6px rgba(204, 0, 255, 0.5);
 }
 
 #speed-bar-bg {
-  width: 200px;
+  width: 180px;
   height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: rgba(204, 0, 255, 0.12);
+  border: 1px solid rgba(204, 0, 255, 0.3);
+  border-radius: 2px;
   overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
 }
 
 #speed-bar {
   height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #00e5ff, #7c4dff, #ff3d71);
-  background-size: 200% 100%;
+  background: linear-gradient(90deg, #cc00ff, #ff44cc, #ff3d71);
   transition: width 0.15s ease-out;
-  box-shadow: 0 0 10px rgba(124, 77, 255, 0.5);
+  box-shadow: 0 0 8px rgba(204, 0, 255, 0.7);
 }
 
 /* Crosshair */
