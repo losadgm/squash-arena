@@ -1,4 +1,4 @@
-# [Squash Arena](losadgm.github.io/squash-arena/)
+# [Squash Arena](https://losadgm.github.io/squash-arena/)
 
 A 3D pong game with a vaporwave aesthetic built with React, TypeScript, and Three.js.
 
